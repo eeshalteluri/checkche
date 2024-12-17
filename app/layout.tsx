@@ -2,10 +2,7 @@ import type { Metadata } from "next";
 import { Poppins } from "next/font/google"
 import "./globals.css";
 import { Toaster } from "react-hot-toast";
-
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
-
+import { SessionProvider } from "next-auth/react";
 
 const poppins = Poppins({
   weight: ['100','500'],
@@ -26,11 +23,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${poppins.className}  antialiased`}
+        className={`${poppins.className}  antialiased h-full`}
       >
-        <Navbar />
-        {children}
-        <Footer />
+        <SessionProvider>
+          <div className="h-full">
+            {children}
+          </div>
+        </SessionProvider>
         <Toaster />
       </body>
     </html>

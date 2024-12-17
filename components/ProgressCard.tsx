@@ -14,7 +14,7 @@ const ProgressCard = () => {
     
         <Card className="w-1/2 flex flex-col justify-between items-center">
             <CardHeader>
-                <CardTitle className="flex justify-between">Progress <IoChevronForward /></CardTitle>
+                <CardTitle className="flex justify-between gap-2">Progress <IoChevronForward /></CardTitle>
                 
             </CardHeader>
             <CardContent>

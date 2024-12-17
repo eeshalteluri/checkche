@@ -1,8 +1,8 @@
 import Link from "next/link"
 import Image from "next/image"
 
-import { IoSearchOutline } from "react-icons/io5";
-import { IoNotificationsOutline } from "react-icons/io5";
+import { Search, Bell } from 'lucide-react';
+
 
 const Navbar = () => {
   return (
@@ -17,9 +17,9 @@ const Navbar = () => {
       </Link>
 
       <div className="flex gap-4">
-        <IoSearchOutline className="w-[25px] h-[25px]"/>
+        <Search className="w-[25px] h-[25px]"/>
         <Link href="/notifications">
-        <IoNotificationsOutline className="w-[25px] h-[25px]"/>
+        <Bell className="w-[25px] h-[25px]"/>
         </Link>
       </div>
 
