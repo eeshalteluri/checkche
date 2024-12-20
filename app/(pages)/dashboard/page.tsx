@@ -1,6 +1,6 @@
 "use client"
 import { useSession } from "next-auth/react";
-import ClaimUsername from "../../components/ClaimUsername";
+import ClaimUsername from "../../../components/ClaimUsername";
 import Sidebar from "@/components/Sidebar";
 import ProgressCard from "@/components/ProgressCard";
 import RemainingTasks from "@/components/RemainingTasks";
@@ -23,7 +23,7 @@ export default function Home() {
       <div className="flex">
         <Sidebar />
         <div className="flex-1 flex justify-center">
-        <ClaimUsername/>
+        {!session.user.username && <ClaimUsername/>}
         </div>
       </div>
 

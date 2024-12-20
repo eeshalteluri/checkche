@@ -6,7 +6,7 @@ import { Search, Bell } from 'lucide-react';
 
 const Navbar = () => {
   return (
-    <div className="p-4 border-b-2 flex justify-between items-center">
+    <div className="p-4 sticky top-0 border-b-2 flex justify-between items-center bg-secondary">
       <Link href="/">
         <Image 
         src="/logo.png"
@@ -15,13 +15,9 @@ const Navbar = () => {
         alt="Logo"
         />
       </Link>
-
-      <div className="flex gap-4">
-        <Search className="w-[25px] h-[25px]"/>
-        <Link href="/notifications">
+      <Link href="/notifications">
         <Bell className="w-[25px] h-[25px]"/>
-        </Link>
-      </div>
+      </Link>
 
     </div>
   )

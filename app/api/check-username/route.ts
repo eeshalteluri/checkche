@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 export async function POST(req: NextRequest) {
     try{
     const { username } = await req.json()
+    console.log(username)
 
     if(!username || username.trim() === ""){
         return NextResponse.json(
@@ -20,11 +21,14 @@ export async function POST(req: NextRequest) {
     const db = client.db()
     const user = await db.collection("users").findOne({username})
 
+    console.log(user)
+
     if(user){
         return NextResponse
         .json(
             {
-                availability: false
+                availability: false,
+                data: user
             },
             {
                 status: 200
@@ -35,7 +39,8 @@ export async function POST(req: NextRequest) {
     return NextResponse
         .json(
             {
-                availability: true
+                availability: true,
+                data: null
             },
             {
                 status: 200

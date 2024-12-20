@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Button } from "./ui/button";
-import { House, CircleUser } from 'lucide-react';
+import { House, CircleUser, Users, Bell } from 'lucide-react';
+import { HiUserGroup } from "react-icons/hi2";
 
 
 
@@ -12,6 +13,12 @@ const Footer = () => {
         >
           <House className="text-white cursor-pointer text-2xl"/>
         </Link>
+        
+        <Link 
+          href="/groups"
+        >
+          <HiUserGroup className="text-white cursor-pointer text-2xl"/>
+        </Link>
 
         <Button 
           className="bg-white text-black text-xl hover:bg-slate-300"
@@ -19,6 +26,13 @@ const Footer = () => {
           +
         </Button>
         
+        <Link 
+          href="/friends"
+        >
+          <Users 
+            className="text-white cursor-pointer text-2xl"
+          />
+        </Link>
         <Link 
           href="/profile"
         >
