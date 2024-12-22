@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import client from "@/lib/db"
 
+
 export async function POST(req: NextRequest){
     try{
         const { email, username } = await req.json()
@@ -29,7 +30,7 @@ export async function POST(req: NextRequest){
             .json(
                 {
                     message: "Username added successfully",
-                    data: [user],
+                    data: user,
                     error: null
                 },
                 {
@@ -43,7 +44,7 @@ export async function POST(req: NextRequest){
             .json(
                 {
                     message: "",
-                    data: [],
+                    data: "",
                     error: "Internal Server Error"
                 },
                 {

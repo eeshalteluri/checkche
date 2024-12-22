@@ -1,7 +1,7 @@
-
 import mongoose from "mongoose"
+import NotificationType from "@/types/notification";
 
-const notificationSchema = new mongoose.Schema({
+const NotificationSchema = new mongoose.Schema<NotificationType>({
     userId: {
         type: mongoose.Schema.Types.ObjectId,
         required: true,
@@ -31,6 +31,6 @@ const notificationSchema = new mongoose.Schema({
     {timestamps: true}
 )
 
-const Notification = mongoose.models.Notification || mongoose.model('Notification', notificationSchema)
+const Notification = mongoose.models.Notification || mongoose.model('Notification', NotificationSchema)
 
 export default Notification;

@@ -5,8 +5,7 @@ import Sidebar from "@/components/Sidebar";
 import ProgressCard from "@/components/ProgressCard";
 import RemainingTasks from "@/components/RemainingTasks";
 import TasksCard from "@/components/TasksCard";
-import { Button } from "@/components/ui/button";
-import { signOut } from "next-auth/react";
+import { signIn } from "next-auth/react";
 
 
 export default function Home() {
@@ -15,7 +14,6 @@ export default function Home() {
 
     if (!session) return <p>Loading...</p>;
     console.log("session: ", session)
-  
 
   return (
     <div>

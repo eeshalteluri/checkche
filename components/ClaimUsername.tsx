@@ -15,19 +15,26 @@ import { Label } from "@/components/ui/label"
 import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
 import { toast } from 'react-hot-toast'; 
+import { signIn } from "next-auth/react";
 
 import { Ban, Check, Loader } from "lucide-react"
   
 
 const ClaimUsername = () => {
 
-  const {data: session} = useSession()
+  const {data: session, update} = useSession()
   const [username, setUsername] = useState("")
   const [isLoading, setLoading ] = useState(false)
   const [isAvailable, setIsAvailable] = useState<boolean | null>(null)
+  
+  const updateSessionUsername = async (username: String) => {
+    try {
+      await update({ username }); // Pass only the property you want to update
+    } catch (error) {
+      console.error("Failed to update session:", error);
+    }
+  }
 
-    
-      
     useEffect(() => {
     if(username.trim() === "") {
       setIsAvailable(null)
@@ -82,15 +89,19 @@ const ClaimUsername = () => {
           email: session?.user.email, 
           username
         })
+
       })
       .then( async (response) => {
-        const data = await response.json()
+        const receivedResponse = await response.json()
+        console.log("receivedResponse: ",receivedResponse)
 
+        
         // Handle success and return the message for the toast
         if (response.ok) {
-          return data.message; // return success message for toast
+          await updateSessionUsername(receivedResponse.data.username)
+          return receivedResponse.message; // return success message for toast
         } else {
-          throw new Error(data.error || "Error claiming username");
+          throw new Error(receivedResponse.error || "Error claiming username");
         }
       })
       .catch((error)=>{
