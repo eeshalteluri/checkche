@@ -11,6 +11,22 @@ import { useState } from "react";
   const FriendCard = ({fullname, username, loggedInUsername}: {fullname: String, username: String, loggedInUsername: String}) => {
 
     console.log(username, loggedInUsername)
+
+    const sendFriendRequest = async () => {
+      const response = await fetch("/api/friend-request", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            "fromUsername": loggedInUsername,
+            "toUsername": username
+          }) 
+        })
+
+      console.log("Friend Request Response: ",response)
+    }
+
     const searchedThemself = () => {
       if(username == loggedInUsername) return true
       else return false
@@ -22,7 +38,7 @@ import { useState } from "react";
             <CardDescription className="font-italic">@{username}</CardDescription>
           </div>
           
-          <Button disabled={searchedThemself()}>Send Request</Button>
+          <Button onClick={() =>{sendFriendRequest()}} disabled={searchedThemself()}>Send Request</Button>
       </Card>
     );
   };

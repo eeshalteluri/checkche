@@ -16,13 +16,18 @@ interface FormData {
   username: string;
 }
 
+interface requestData {
+  name: string,
+  username: string
+}
+
 const FriendsPage = () => {
   const { data: session, status } = useSession(); // Track session status
   const [searchedUsername, setSearchedUsername] = useState("");
-  const [searchedUser, setSearchedUser] = useState({
-    fullName: "",
-    userName: "",
-  });
+  const [searchedUser, setSearchedUser] = useState({ fullName: "", userName: ""});
+  const [sentRequests, setSentRequests] = useState<requestData[]>([])
+  const [receivedRequests, setReceivedRequests] = useState<requestData[]>([])
+  const [friends, setFriends] =  useState<requestData[]>([])
   const form = useForm<FormData>();
 
   console.log("LoggedInUsername: ", session?.user);
@@ -49,6 +54,32 @@ const FriendsPage = () => {
       userName: userData.data?.username,
     });
   };
+
+  useEffect(() => {
+    const fetchRequestsSent = async() => {
+    const response = await fetch(`/api/requests-sent?username=${session?.user.username}`)
+    const data = await response.json();
+    setSentRequests(data.requestedUsers || []); // Ensure fallback for empty data
+  };
+    const fetchRequestsReceived = async() => {
+    const response = await fetch(`/api/requests-received?username=${session?.user.username}`)
+    const data = await response.json();
+    setReceivedRequests(data.requestedUsers || []); // Ensure fallback for empty data
+  };
+    const fetchFriends = async() => {
+    const response = await fetch(`/api/friend?username=${session?.user.username}`)
+    const data = await response.json();
+    console.log(data)
+    setFriends(data.friends || []); // Ensure fallback for empty data
+  };
+
+
+  if (session?.user.username) {
+    fetchRequestsSent()
+    fetchRequestsReceived()
+    fetchFriends()
+  }
+}, [session?.user])
 
   // Render loading state while session is being fetched
   if (status === "loading") {
@@ -107,8 +138,24 @@ const FriendsPage = () => {
         </CardHeader>
 
         <CardContent className="space-y-2">
-          <FriendCard fullname={"Praveen Kumar hinge"} username={"eeshal"} />
-          <FriendCard fullname={"Eeshal"} username={"eeshal"} />
+        {
+        friends && friends.length > 0 ? 
+          ( friends.map(
+            (friend: { name: string; username: string }) => (
+              
+              <FriendCard
+                key={friend.username}
+                fullname={friend.name}
+                username={friend.username}
+                loggedInUserId = {session.user.id}
+              />
+            ))
+          ) : 
+          (
+            <p className="text-center text-gray-500">You have no friends yet.</p>
+          )
+        }
+          
         </CardContent>
       </Card>
 
@@ -123,9 +170,21 @@ const FriendsPage = () => {
               <CardTitle>Requests Sent</CardTitle>
             </CardHeader>
 
-            <CardContent className="space-y-2">
-              <RequestFriendCard fullname={"Eeshal"} username={"eeshal"} type="sent" />
-            </CardContent>
+            
+            {sentRequests && sentRequests.length > 0 ? (
+              sentRequests.map((request: requestData) => (
+              
+              <CardContent key={request.username} className="space-y-2">
+                <RequestFriendCard
+                  fullname={request.name}
+                  username={request.username}
+                  type="sent"
+                />
+              </CardContent>
+              ))
+            ) : (
+              <p className="mb-2 text-center text-gray-500">No friend requests sent.</p>
+            )} 
           </Card>
 
           <Card>
@@ -133,9 +192,20 @@ const FriendsPage = () => {
               <CardTitle>Requests Received</CardTitle>
             </CardHeader>
 
-            <CardContent className="space-y-2">
-              <RequestFriendCard fullname={"Eeshal"} username={"eeshal"} type="received" />
-            </CardContent>
+            {receivedRequests && receivedRequests.length > 0 ? (
+              receivedRequests.map((request: requestData) => (
+              
+              <CardContent key={request.username} className="space-y-2">
+                <RequestFriendCard
+                  fullname={request.name}
+                  username={request.username}
+                  type="received"
+                />
+              </CardContent>
+              ))
+            ) : (
+              <p className="mb-2 text-center text-gray-500">No friend requests received.</p>
+            )} 
           </Card>
         </CardContent>
       </Card>
