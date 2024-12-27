@@ -4,11 +4,10 @@ import {
     CardTitle,
     CardDescription,
   } from "@/components/ui/card";
-  import { UserMinus } from "lucide-react";
 import { Button } from "./ui/button";
 import { useState } from "react";
 import { useSession } from "next-auth/react";
-import Notification from "@/models/Notification";
+
   
   const RequestFriendCard = ({fullname, username, type}: {fullname: string, username: string, type: string}) => {
     const { data: session} = useSession()
@@ -43,7 +42,7 @@ import Notification from "@/models/Notification";
       setIsClicked(false);
     }
 
-    const addFriend = async (username: string, loggedInUserId: string) => {
+    const addFriend = async (username: string, loggedInUsername: string, loggedInUserFullname: string) => {
       const response = await fetch("/api/friend",{
         "method": "POST",
         "headers": {
@@ -51,7 +50,8 @@ import Notification from "@/models/Notification";
         },
         body: JSON.stringify({
           username,
-          loggedInUserId
+          loggedInUsername,
+          loggedInUserFullname
         })
       })
     }
@@ -64,7 +64,7 @@ import Notification from "@/models/Notification";
           </div>
           
           <div className="flex gap-2">
-          {type == "received" && <Button onClick={() => addFriend(username, session?.user.id!)}>Accept</Button>}
+          {type == "received" && <Button onClick={() => addFriend(username, session?.user.username, session?.user.name)}>Accept</Button>}
           <Button onClick={handleDeleteClick}>Delete</Button>
           </div>
       </Card>

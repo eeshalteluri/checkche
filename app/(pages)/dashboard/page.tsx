@@ -6,6 +6,7 @@ import ProgressCard from "@/components/ProgressCard";
 import RemainingTasks from "@/components/RemainingTasks";
 import TasksCard from "@/components/TasksCard";
 import { signIn } from "next-auth/react";
+import TaskCard from "@/components/TaskCard";
 
 
 export default function Home() {
@@ -31,6 +32,8 @@ export default function Home() {
       </div>
 
       <TasksCard />
+
+      <TaskCard />
     </div>
   );
 }

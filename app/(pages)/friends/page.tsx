@@ -66,18 +66,14 @@ const FriendsPage = () => {
     const data = await response.json();
     setReceivedRequests(data.requestedUsers || []); // Ensure fallback for empty data
   };
-    const fetchFriends = async() => {
-    const response = await fetch(`/api/friend?username=${session?.user.username}`)
-    const data = await response.json();
-    console.log(data)
-    setFriends(data.friends || []); // Ensure fallback for empty data
-  };
+   
+    setFriends(session?.user.friends || []); // Ensure fallback for empty data
 
 
   if (session?.user.username) {
     fetchRequestsSent()
     fetchRequestsReceived()
-    fetchFriends()
+    
   }
 }, [session?.user])
 

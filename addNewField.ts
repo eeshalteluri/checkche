@@ -23,7 +23,7 @@ async function updateUsernames() {
   } catch (err) {
     console.error('Error during migration:', err);
   } finally {
-    await client.close();
+    
   }
 }
 

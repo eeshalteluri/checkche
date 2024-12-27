@@ -1,9 +1,7 @@
 import Link from "next/link";
-import { Button } from "./ui/button";
 import { House, CircleUser, Users, Bell } from 'lucide-react';
 import { HiUserGroup } from "react-icons/hi2";
-
-
+import AddNewTask from "./AddNewTask";
 
 const Footer = () => {
   return (
@@ -20,11 +18,8 @@ const Footer = () => {
           <HiUserGroup className="text-white cursor-pointer text-2xl"/>
         </Link>
 
-        <Button 
-          className="bg-white text-black text-xl hover:bg-slate-300"
-        >
-          +
-        </Button>
+      
+        <AddNewTask />
         
         <Link 
           href="/friends"

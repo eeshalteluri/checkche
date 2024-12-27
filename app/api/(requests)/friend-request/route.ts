@@ -6,7 +6,7 @@ import User from "@/models/User";
 import { ObjectId } from "mongodb";
 import { isObjectIdOrHexString } from "mongoose";
 import client from "@/lib/db";
-import findUserId from "@/app/helpers/FindUserId";
+import {findUserId} from "@/app/helpers/FindUserId";
 
 export async function POST (req: NextRequest) {
     try{

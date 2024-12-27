@@ -1,6 +1,6 @@
 import client from "@/lib/db";
 
- const findUserId = async (username: string) => {
+ export const findUserId = async (username: string) => {
     try{
         const db = client.db()    
         console.log(username)
@@ -17,4 +17,20 @@ import client from "@/lib/db";
     }
 }
 
-export default findUserId
+export const findUserDetails = async (username: string) => {
+    try{
+        const db = client.db()    
+        console.log(username)
+
+        // Find users by their usernames
+        const User = await db.collection("users").findOne({ username });
+    
+
+        console.log("User: ", User)
+        return User
+    }catch(error){
+        console.error("Error finding user:", error);
+        return null;
+    }
+}
+
