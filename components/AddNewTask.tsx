@@ -1,66 +1,77 @@
 "use client"
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-  } from "@/components/ui/dialog"
-  
-  
-  import { Button } from "./ui/button";
-  import { Input } from "@/components/ui/input"
-  import { Label } from "@/components/ui/label"
-  import { Textarea } from "@/components/ui/textarea"
-import { useState } from "react";
-import { Toggle } from "@/components/ui/toggle"
-import { Calendar } from "@/components/ui/calendar"
-import { Calendar1, ChevronRight, Info } from "lucide-react";
-import AddAccountabilityPartner from "./AddAccountabilityPartner";
-import { ToggleGroup, ToggleGroupItem } from "./ui/toggle-group";
-import { DatePicker } from "./DatePicker";
 
-const formatDate = (date: Date): string => {
-  const day = String(date.getDate()).padStart(2, "0");
-  const month = String(date.getMonth() + 1).padStart(2, "0"); // Months are 0-indexed
-  const year = date.getFullYear();
-  return `${day}-${month}-${year}`;
-};
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod"; // Import Zod for validation
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Button } from "./ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import AddAccountabilityPartner from "./AddAccountabilityPartner";
+import { DatePicker } from "./DatePicker";
+import { Calendar } from "./ui/calendar";
+import { ToggleGroup, ToggleGroupItem } from "./ui/toggle-group";
+import { Info } from "lucide-react";
+import { Combobox } from "./Combobox"
+
+
+// Zod schema definition
+const schema = z.object({
+  taskName: z.string().min(1, "Task name is required"),
+  description: z.string().min(1, "Description is required"),
+  frequencyType: z.enum(["daily", "weekly", "monthly", "custom"], {
+    errorMap: () => ({ message: "Please select a frequency" }),
+  }),
+  taskType: z.enum(["AT", "NT"]),
+  from: z.union([z.string(), z.date()]),  // Allows either string or Date for 'from'
+  end: z.date().nullable().optional(),   // End date is optional and can be null
+  accountabilityPartner: z
+    .object({
+      name: z.string(),
+      username: z.string(),
+    })
+    .optional(),
+  frequency: z.array(z.union([z.string(), z.date()])).optional(), // Frequency can be an array of strings or Dates
+})
+  .refine(
+    (data) => data.taskType === "NT" || (data.taskType === "AT" && data.accountabilityPartner?.username),
+    {
+      message: "Accountability partner is required for 'Accountable' tasks",
+      path: ["accountabilityPartner"],
+    }
+  )
+  .refine(
+    (data) =>
+      data.frequencyType === "daily" || (data.frequency && data.frequency.length > 0),
+    {
+      message: "Frequency cannot be empty for the selected frequency type",
+      path: ["frequency"],
+    }
+  )
 
 const AddNewTask = () => {
-  const [formData, setFormData] = useState<{
-    taskName: string;
-    description: string;
-    frequencyType: string;
-    frequency: string[] | Date[]; // Correct type
-    taskType: string;
-    accountabilityPartner: string;
-    from: Date
-    end: Date | null
-  }>({
-    taskName: "",
-    description: "",
-    frequencyType: "daily",
-    frequency: [],
-    taskType: "AT",
-    accountabilityPartner: "",
-    from: new Date(), 
-    end: null
+  const { control, handleSubmit, clearErrors, setValue, reset, watch, formState: { errors } } = useForm({
+    resolver: zodResolver(schema),
+    defaultValues: {
+      taskName: "",
+      description: "",
+      frequencyType: "daily",
+      frequency: [] as Date[] | String[], // This should be typed as Date[]
+      taskType: "AT",
+      accountabilityPartner: {name: "", username:""},
+      from: "" as Date | string,
+      end: null as Date | null
+    }
   })
-  
-  const handleChange = (key: string, value: any) => {
-    setFormData((prev) => ({
-      ...prev,
-      [key]: value,
-      ...(key === "frequencyType" && { frequency: [] }), // Reset frequency if frequencyType changes
-    }));
+
+  const onSubmit = (data: any) => {
+    console.log(data); // Data can be sent to your database API
+    reset()
+    clearErrors()
   };
 
-  const handleSubmit = () => {
-    console.log(formData); // This can be sent to your database API
-  };
+  console.log(errors)
 
   return (
     <Dialog>
@@ -70,29 +81,39 @@ const AddNewTask = () => {
         </Button>
       </DialogTrigger>
 
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Add New Task</DialogTitle>
-        </DialogHeader>
-
+      <DialogContent className="h-[400px] overflow-y-scroll">
+        <DialogHeader/>
+        <form onSubmit={handleSubmit(onSubmit)}>
         <div className="space-y-4">
           {/* Task Name */}
           <div>
             <Label htmlFor="name">Task Name</Label>
-            <Input
-              id="name"
-              value={formData.taskName}
-              onChange={(e) => handleChange("taskName", e.target.value)}
+            <Controller
+              name="taskName"
+              control={control}
+              render={({ field }) => (
+                <Input
+                  id="name"
+                  {...field}
+                  className={errors.taskName ? "border-red-500" : ""}
+                />
+              )}
             />
           </div>
 
           {/* Description */}
           <div>
             <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              value={formData.description}
-              onChange={(e) => handleChange("description", e.target.value)}
+            <Controller
+              name="description"
+              control={control}
+              render={({ field }) => (
+                <Textarea
+                  id="description"
+                  {...field}
+                  className={errors.description ? "border-red-500" : ""}
+                />
+              )}
             />
           </div>
 
@@ -104,12 +125,11 @@ const AddNewTask = () => {
                 <Button
                   key={freq}
                   variant="outline"
-                  onClick={() => handleChange("frequencyType", freq)}
-                  className={`${
-                    formData.frequencyType === freq
-                      ? "bg-blue-500 text-white hover:bg-blue-500 hover:text-white"
-                      : ""
-                  }`}
+                  onClick={() => {
+                    setValue("frequencyType", freq)
+                    setValue("frequency", [])
+                  }}
+                  className={watch("frequencyType") === freq ? "bg-blue-500 text-white hover:bg-blue-500 hover:text-white" : ""}
                 >
                   {freq.charAt(0).toUpperCase() + freq.slice(1)}
                 </Button>
@@ -117,100 +137,103 @@ const AddNewTask = () => {
             </div>
           </div>
 
-          {/* Conditional Inputs for Weekly, Monthly, Custom */}
-          
-          {/* Weekly Selection */}
-          {formData.frequencyType === "weekly" && (
+          {/* Conditional Inputs */}
+          {watch("frequencyType") === "weekly" && (
             <div >
-              <ToggleGroup
-                type="multiple"
-                value={formData.frequency as string[]}
-                className="w-full grid grid-cols-7 gap-2"
-                onValueChange={(selectedDays) =>
-                setFormData((prev) => ({
-                    ...prev,
-                    frequency: selectedDays,
-                  }))
-                }
+            <ToggleGroup
+              type="multiple"
+              value={watch("frequency") as string[]}
+              className="w-full grid grid-cols-7 gap-2"
+              onValueChange={(selectedDays) =>
+              setValue("frequency", selectedDays)
+              }
+            >
+            {["monday", "tuesday", "wednesday", "thrusday", "friday", "saturday", "sunday"].map((day) => (
+              <ToggleGroupItem
+                key={day}
+                value={day}
+                variant={"outline"}
+                className={`outline-none data-[state=on]:bg-blue-500 data-[state=on]:text-white ${errors.frequency ? (watch("frequency")?.length ? "" : "border-red-500") : ""}`}
               >
-              {["monday", "tuesday", "wednesday", "thrusday", "friday", "saturday", "sunday"].map((day) => (
-                <ToggleGroupItem
-                  key={day}
-                  value={day}
-                  variant={"outline"}
-                  className="outline-none data-[state=on]:bg-blue-500 data-[state=on]:text-white"
-                >
-                  {day.charAt(0).toUpperCase()}
-                </ToggleGroupItem>
-              ))}
-              </ToggleGroup>
-            </div>
+                {day.charAt(0).toUpperCase()}
+              </ToggleGroupItem>
+            ))}
+            </ToggleGroup>
+          </div>
           )}
 
-          {/* Monthly Selection */}
-          {formData.frequencyType === "monthly" && (
+          {watch("frequencyType") === "monthly" && (
             <>
-              <div >
-              <ToggleGroup
-                type="multiple"
-                value={formData.frequency as string[]}
-                className="w-full grid grid-cols-7 gap-2"
-                onValueChange={(selectedDates) =>
-                setFormData((prev) => ({
-                    ...prev,
-                    frequency: selectedDates,
-                  }))
-                }
+            <div >
+            <ToggleGroup
+              type="multiple"
+              value={watch("frequency") as string[]}
+              className="w-full grid grid-cols-7 gap-2"
+              onValueChange={(selectedDates) =>
+              setValue("frequency", selectedDates)
+              }
+            >
+              {Array.from({ length: 31 }, (_, i) => (
+                <ToggleGroupItem
+                key={i+1}
+                value={(i+1).toString()}
+                variant={"outline"}
+                className={`outline-none data-[state=on]:bg-blue-500 data-[state=on]:text-white ${errors.frequency ? (watch("frequency")?.length ? "" : "border-red-500") : ""}`}
               >
-                {Array.from({ length: 31 }, (_, i) => (
-                  <ToggleGroupItem
-                  key={i+1}
-                  value={(i+1).toString()}
-                  variant={"outline"}
-                  className="outline-none data-[state=on]:bg-blue-500 data-[state=on]:text-white"
-                >
-                  {i+1}
-                </ToggleGroupItem>
-              ))}
-              </ToggleGroup>
+                {i+1}
+              </ToggleGroupItem>
+            ))}
+            </ToggleGroup>
+          </div>
+
+            <div className="flex items-start gap-2">
+              <Info />
+              <p className="text-xs">
+                Tasks will be added to the particular date, if that date exists in the month.
+              </p>
+            </div>
+          </>
+          )}
+
+          {watch("frequencyType") === "custom" && (
+            <>
+              <Calendar
+              mode="multiple"
+              selected={watch("frequency") as Date[]}
+              onSelect={(date)=> setValue("frequency", date!)}
+              />
+              {errors.frequency && !watch("frequency")?.length ? <p className="text-xs text-red-500">{errors?.frequency.message}</p>: <></>}
+          </>
+          )}
+
+
+          {/* Start and End Dates */}
+          {(watch("frequencyType") === "daily" || watch("frequencyType") === "weekly") && 
+          <>
+            <div className="flex justify-between items-center">
+              <Label>Starts at:</Label>
+              <DatePicker
+                date={watch("from") as Date}
+                onDateChange={(date) => setValue("from", date as Date)}
+              />
             </div>
 
-              <div className="flex items-start gap-2">
-                <Info />
-                <p className="text-xs">
-                  Tasks will be added to the particular date, if that date exists in the month.
-                </p>
-              </div>
-            </>
-          )}
+            <div className="flex justify-between items-center">
+              <Label>Ends at: <span className="text-xs text-gray-400">(optional)</span></Label>
+              <DatePicker
+                date={watch("end")}
+                onDateChange={(date) => setValue("end", date)}
+              />
+            </div>
+          </>
+         }
 
-          {/* Custom Selection */}
-          {formData.frequencyType === "custom" && (
-            <Calendar
-              mode="multiple"
-              selected={formData.frequency as Date[]}
-              onSelect={(frequency) => handleChange("frequency", frequency)}
-            />
-          )}
-
-          <div className="flex justify-between items-center">
-            <Label>Starts at:</Label>
-            <DatePicker
-              date={formData.from}
-              onDateChange={(date) => handleChange("from", date || new Date())}
-            />
-          </div>
-
-          <div className="flex justify-between items-center">
-            <Label className="w-fit">
-              Ends at: <span className="text-xs text-gray-400">(optional)</span>
-            </Label>
-            <DatePicker
-              date={formData.end}
-              onDateChange={(date) => handleChange("end", date || null)}
-            />
-          </div>
-
+         {watch("frequencyType") === "monthly" && 
+         <>
+          <Combobox onSelect={(selectedMonth: string) => {
+            setValue("from", selectedMonth)
+          }}/>
+         </>}
 
           {/* Task Type */}
           <div>
@@ -220,12 +243,8 @@ const AddNewTask = () => {
                 <Button
                   key={type}
                   variant="outline"
-                  onClick={() => handleChange("taskType", type)}
-                  className={`${
-                    formData.taskType === type
-                      ? "bg-blue-500 text-white"
-                      : ""
-                  }`}
+                  onClick={() => setValue("taskType", type)}
+                  className={watch("taskType") === type ? "bg-blue-500 text-white" : ""}
                 >
                   {type === "AT" ? "Accountable" : "Normal"}
                 </Button>
@@ -233,18 +252,22 @@ const AddNewTask = () => {
             </div>
           </div>
 
-          {formData.taskType === "AT" && 
-          (<div>
-            <AddAccountabilityPartner/>
-          </div>)  
-          }
-
-
+          {/* Accountability Partner */}
+          {watch("taskType") === "AT" && (
+            <div>
+              <AddAccountabilityPartner
+                selectedPartner={watch("accountabilityPartner")}
+                onPartnerSelect={(partner: {name: string, username: string}) => setValue("accountabilityPartner", partner)}
+                error={errors.accountabilityPartner}
+              />
+            </div>
+          )}
         </div>
 
-        <DialogFooter>
-          <Button onClick={handleSubmit}>Add Task</Button>
+        <DialogFooter className="mt-1">
+          <Button type="submit">Add Task</Button>
         </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );

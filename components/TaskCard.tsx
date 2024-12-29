@@ -1,4 +1,4 @@
-import { Check, ClipboardList, Hourglass, Info } from "lucide-react";
+import { Check, ClipboardList, Flame, Hourglass, Info } from "lucide-react";
 import { TaskCardHolder, 
     CardHeader,
     CardTitle,
@@ -16,6 +16,26 @@ const TaskCard = () => {
             <CardDescription/>
             </div>
             <Info className="w-4 h-4"/>
+            </div>
+
+            <div className="flex flex-col items-center">
+              <div className="flex justify-center items-center text-sm">
+                <p>-</p>
+                <Flame className="w-5 h-5 text-orange-500"/>
+              </div>
+
+              <p className="w-fit text-xs text-gray-500">Curr.</p>
+              
+            </div>
+
+            <div className="flex flex-col items-center">
+              <div className="flex justify-center items-center text-sm">
+                <p>1</p>
+                <Flame className="w-5 h-5 text-orange-500"/>
+              </div>
+
+              <p className="w-fit text-xs text-gray-500">Long.</p>
+              
             </div>
 
             <Button>Mark</Button>

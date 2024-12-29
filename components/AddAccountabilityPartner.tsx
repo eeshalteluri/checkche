@@ -1,3 +1,5 @@
+"use client"
+
 import {
   Drawer,
   DrawerClose,
@@ -14,6 +16,7 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
+import { Merge, FieldErrorsImpl } from "react-hook-form";
 
 import {
   Card,
@@ -21,12 +24,19 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Badge } from "./ui/badge";
+import { FieldError } from "react-hook-form";
 
-const AddAccountabilityPartner = () => {
+interface AddAccountabilityPartnerProps {
+  selectedPartner: {name: string, username: string}
+  onPartnerSelect: (partner: {name: string, username: string}) => void;
+  error?:  FieldError | Merge<FieldError, FieldErrorsImpl<{ name: string; username: string }>>
+}
+
+const AddAccountabilityPartner = ({ selectedPartner, onPartnerSelect, error }: AddAccountabilityPartnerProps) => {
   const { data: session } = useSession();
   const [friends, setFriends] = useState< {name: string; username: string }[]>([])
   const [searchedPartner, setSearchedPartner] = useState<string>("");
-  const [selectedPartner, setSelectedPartner] = useState<any>(null); // Store the selected partner
+  
 
   useEffect(() => {
     if (session?.user?.friends) {
@@ -41,19 +51,19 @@ const AddAccountabilityPartner = () => {
   );
 
   const handleSelectPartner = (friend: any) => {
-    setSelectedPartner(friend);
+    onPartnerSelect(friend)
     console.log("Selected Partner:", friend); // You can send this data to an API or handle it as needed
   };
 
   return (
     <Drawer>
-      <DrawerTrigger className="w-full">
-        <div className="flex items-center justify-between p-2 border rounded">
+      <DrawerTrigger className= "w-full">
+        <div className={`flex items-center justify-between p-2 border rounded ${!selectedPartner.username && error ? "border-red-500":""}`}>
           <Label htmlFor="title" className="text-right">
             Accountability Partner
           </Label>
 
-          {selectedPartner ? <Badge className="max-w-25">{selectedPartner?.username}</Badge>: <ChevronRight /> }
+          {selectedPartner.username ? <Badge className="max-w-25">{selectedPartner?.username}</Badge>: <ChevronRight /> }
         </div>
       </DrawerTrigger>
       <DrawerContent>
@@ -95,7 +105,7 @@ const AddAccountabilityPartner = () => {
         </div>
 
         <DrawerFooter>
-          {selectedPartner && (
+          {selectedPartner.username && (
             <div className="text-sm text-gray-600">
               Selected Partner: {selectedPartner.name} (@{selectedPartner.username})
             </div>
