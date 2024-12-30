@@ -12,5 +12,5 @@ const UserSchema = new mongoose.Schema<UserType>({
 });
 
 // Export the model
-const User = mongoose.models.Notification || mongoose.model<UserType>("User", UserSchema);
+const User = mongoose.models.User || mongoose.model<UserType>("User", UserSchema);
 export default User;

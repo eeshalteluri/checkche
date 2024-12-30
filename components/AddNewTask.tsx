@@ -2,7 +2,6 @@
 
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod"; // Import Zod for validation
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "./ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,45 +13,25 @@ import { Calendar } from "./ui/calendar";
 import { ToggleGroup, ToggleGroupItem } from "./ui/toggle-group";
 import { Info } from "lucide-react";
 import { Combobox } from "./Combobox"
+import taskSchema from "@/zod/TaskSchema";
+import { useSession } from "next-auth/react";
+import { useState, useEffect } from "react";
 
-
-// Zod schema definition
-const schema = z.object({
-  taskName: z.string().min(1, "Task name is required"),
-  description: z.string().min(1, "Description is required"),
-  frequencyType: z.enum(["daily", "weekly", "monthly", "custom"], {
-    errorMap: () => ({ message: "Please select a frequency" }),
-  }),
-  taskType: z.enum(["AT", "NT"]),
-  from: z.union([z.string(), z.date()]),  // Allows either string or Date for 'from'
-  end: z.date().nullable().optional(),   // End date is optional and can be null
-  accountabilityPartner: z
-    .object({
-      name: z.string(),
-      username: z.string(),
-    })
-    .optional(),
-  frequency: z.array(z.union([z.string(), z.date()])).optional(), // Frequency can be an array of strings or Dates
-})
-  .refine(
-    (data) => data.taskType === "NT" || (data.taskType === "AT" && data.accountabilityPartner?.username),
-    {
-      message: "Accountability partner is required for 'Accountable' tasks",
-      path: ["accountabilityPartner"],
-    }
-  )
-  .refine(
-    (data) =>
-      data.frequencyType === "daily" || (data.frequency && data.frequency.length > 0),
-    {
-      message: "Frequency cannot be empty for the selected frequency type",
-      path: ["frequency"],
-    }
-  )
+const date = new Date()
+const monthName = date.getMonth().toString()
+console.log(typeof(monthName))
 
 const AddNewTask = () => {
+  const { data: session, status } = useSession();
+  const [userId, setUserId] = useState<string | undefined>();
+
+  useEffect(() => {
+    if (session?.user?.id) {
+      setUserId(session.user.id);
+    }
+  }, [session]);
   const { control, handleSubmit, clearErrors, setValue, reset, watch, formState: { errors } } = useForm({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(taskSchema),
     defaultValues: {
       taskName: "",
       description: "",
@@ -60,13 +39,30 @@ const AddNewTask = () => {
       frequency: [] as Date[] | String[], // This should be typed as Date[]
       taskType: "AT",
       accountabilityPartner: {name: "", username:""},
-      from: "" as Date | string,
-      end: null as Date | null
+      from: new Date() as Date,
+      end: null as Date | null,
+      startMonth: monthName
     }
   })
+  
+  
 
-  const onSubmit = (data: any) => {
-    console.log(data); // Data can be sent to your database API
+  const onSubmit = async (data: any) => {
+    console.log("on submit data: ",data)
+
+    const bodyData = { ...data, userId };
+
+    const response = await fetch("/api/tasks/new-task",{
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(bodyData),
+    })
+
+    const responseData = await response.json()
+
+    console.log("Response of adding new task: ", responseData)
     reset()
     clearErrors()
   };
@@ -82,7 +78,6 @@ const AddNewTask = () => {
       </DialogTrigger>
 
       <DialogContent className="h-[400px] overflow-y-scroll">
-        <DialogHeader/>
         <form onSubmit={handleSubmit(onSubmit)}>
         <div className="space-y-4">
           {/* Task Name */}
@@ -135,6 +130,8 @@ const AddNewTask = () => {
                 </Button>
               ))}
             </div>
+
+            
           </div>
 
           {/* Conditional Inputs */}
@@ -212,17 +209,17 @@ const AddNewTask = () => {
           <>
             <div className="flex justify-between items-center">
               <Label>Starts at:</Label>
-              <DatePicker
-                date={watch("from") as Date}
-                onDateChange={(date) => setValue("from", date as Date)}
+              <DatePicker date={watch("from") as Date} onDateChange={(date) => { console.log("Selected 'from' date:", date) 
+              setValue("from", date!)}}
               />
             </div>
 
-            <div className="flex justify-between items-center">
+            <div className={`flex justify-between items-center `}>
               <Label>Ends at: <span className="text-xs text-gray-400">(optional)</span></Label>
               <DatePicker
                 date={watch("end")}
                 onDateChange={(date) => setValue("end", date)}
+                className = {errors.end ? "border-red-500" : ""}
               />
             </div>
           </>
@@ -231,29 +228,30 @@ const AddNewTask = () => {
          {watch("frequencyType") === "monthly" && 
          <>
           <Combobox onSelect={(selectedMonth: string) => {
-            setValue("from", selectedMonth)
+            setValue("startMonth", selectedMonth)
           }}/>
          </>}
 
           {/* Task Type */}
-          <div>
-            <Label>Task Type</Label>
-            <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-2">
               {["AT", "NT"].map((type) => (
                 <Button
-                  key={type}
-                  variant="outline"
-                  onClick={() => setValue("taskType", type)}
-                  className={watch("taskType") === type ? "bg-blue-500 text-white" : ""}
-                >
-                  {type === "AT" ? "Accountable" : "Normal"}
-                </Button>
+                key={type}
+                variant="outline"
+                type="button"
+                onClick={() => {
+                  setValue("taskType", type)
+                  setValue("accountabilityPartner", {name: "", username: ""})
+                }}
+                className={watch("taskType") === type ? "bg-blue-500 text-white hover:bg-blue-500 hover:text-white" : ""}
+              >
+                {type === "AT" ? "Accountable" : "Normal"}
+              </Button>
               ))}
             </div>
-          </div>
 
           {/* Accountability Partner */}
-          {watch("taskType") === "AT" && (
+          {watch("taskType") === "AT" && 
             <div>
               <AddAccountabilityPartner
                 selectedPartner={watch("accountabilityPartner")}
@@ -261,10 +259,10 @@ const AddNewTask = () => {
                 error={errors.accountabilityPartner}
               />
             </div>
-          )}
+          }
         </div>
 
-        <DialogFooter className="mt-1">
+        <DialogFooter className="mt-6">
           <Button type="submit">Add Task</Button>
         </DialogFooter>
         </form>

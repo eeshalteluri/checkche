@@ -48,11 +48,12 @@ export function Combobox({ onSelect }) {
   const handleSelection = (selectedItems) => {
     console.log(selectedItems)
     setValue(selectedItems)
-    onSelect([selectedItems])
+    onSelect(selectedItems)
+    setOpen(false)
   }
 
   return (
-    <Drawer>
+    <Drawer open={open} onOpenChange={setOpen}>
       <DrawerTrigger asChild>
         <Button
           variant="outline"

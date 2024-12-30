@@ -1,11 +1,10 @@
 import client from "@/lib/db"
 import { NextResponse, NextRequest } from "next/server"
 import Notification from "@/models/Notification"
-import User from "@/models/User"
 import NotificationType from "@/types/notification"
 import { connectDB } from "@/lib/dbConnect"
 
-export async function GET (req: NextResponse) {
+export async function GET (req: NextRequest) {
     try{
     const { searchParams } =  new URL(req.url)
     const username = searchParams.get("username")

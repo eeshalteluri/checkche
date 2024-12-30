@@ -1,6 +1,11 @@
 import mongoose from "mongoose";
 
 const TaskSchema = new mongoose.Schema({
+    userId: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: true,
+        ref: "User"
+    },
     name: {
         type: String,
         required: true
@@ -24,8 +29,7 @@ const TaskSchema = new mongoose.Schema({
         default: "AT"
     },
     accountabilityPartner: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User"
+        type: {name: {type: String}, username: {type: String}}
     },
     startDate: {
         type: Date,
@@ -34,11 +38,14 @@ const TaskSchema = new mongoose.Schema({
     },
     endDate: {
         type: Date,
+    },
+    startMonth: {
+        type: String,
     }
 
 },{timestamps: true}
 
 )
 
-const Task = mongoose.models.Notification || mongoose.model('Task', TaskSchema)
+const Task = mongoose.models.Task || mongoose.model('Task', TaskSchema)
 export default Task

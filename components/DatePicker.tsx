@@ -16,9 +16,11 @@ import {
 export function DatePicker({
     date,
     onDateChange,
+    className
   }: {
     date: Date | null;
     onDateChange: (date: Date | null) => void;
+    className?: string
   }) {
     return (
       <Popover>
@@ -27,7 +29,8 @@ export function DatePicker({
             variant={"outline"}
             className={cn(
               "w-[200px] justify-start text-left font-normal",
-              !date && "text-muted-foreground"
+              !date && "text-muted-foreground",
+              className
             )}
           >
             <CalendarIcon className="mr-2 h-4 w-4" />
@@ -38,7 +41,7 @@ export function DatePicker({
           <Calendar
             mode="single"
             selected={date || undefined}
-            onSelect={() => onDateChange}
+            onSelect={(selectedDate) => onDateChange(selectedDate!)}
             initialFocus
           />
         </PopoverContent>
