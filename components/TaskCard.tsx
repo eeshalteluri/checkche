@@ -71,7 +71,7 @@ const TaskCard = () => {
         {Array.from({ length: 365 }).map((_, index) => (
             <div
             key={index}
-            className={`w-3 h-3 rounded ${index%2 === 0 ? "bg-green-200": "bg-gray-200" }`}
+            className={`w-[14px] h-[14px] rounded-sm ${index%2 === 0 ? "bg-green-200": "bg-gray-200" }`}
             ></div>
         ))}
         </div>

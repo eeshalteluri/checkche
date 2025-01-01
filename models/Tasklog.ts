@@ -18,14 +18,9 @@ const TaskLogSchema = new mongoose.Schema({
     required: true,
     ref: "Task",
   },
-  type: {
-    type: String,
-    enum: ["daily", "weekly", "monthly", "custom"],
-    required: true,
-  },
   logs: {
-    type: Map, // Flexible structure to store logs for any type
-    of: [LogSchema], // Each key contains an array of `LogSchema`
+    type: [LogSchema], 
+    required: true
   },
 });
 

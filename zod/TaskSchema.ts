@@ -7,7 +7,6 @@ const taskSchema = z.object({
       errorMap: () => ({ message: "Please select a frequency" }),
     }),
     taskType: z.enum(["AT", "NT"]),
-    startMonth: z.string().optional(),
     from:  z.date(),  // Allows either string or Date for 'from'
     end: z.date().nullable().optional(),   // End date is optional and can be null
     accountabilityPartner: z
@@ -31,14 +30,6 @@ const taskSchema = z.object({
       {
         message: "Frequency cannot be empty for the selected frequency type",
         path: ["frequency"],
-      }
-    )
-    .refine(
-      (data) =>
-        data.frequencyType === "monthly" || data.startMonth,
-      {
-        message: "Starting month cannot be empty for the selected frequency type",
-        path: ["startMonth"],
       }
     )
     .refine((data) => {

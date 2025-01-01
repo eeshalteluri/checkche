@@ -39,9 +39,6 @@ const TaskSchema = new mongoose.Schema({
     endDate: {
         type: Date,
     },
-    startMonth: {
-        type: String,
-    }
 
 },{timestamps: true}
 

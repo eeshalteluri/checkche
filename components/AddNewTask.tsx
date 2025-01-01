@@ -16,6 +16,8 @@ import { Combobox } from "./Combobox"
 import taskSchema from "@/zod/TaskSchema";
 import { useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
+import { startOfDay } from "date-fns";
+import MonthlyPicker from "./MonthlyPicker";
 
 const date = new Date()
 const monthName = date.getMonth().toString()
@@ -41,7 +43,6 @@ const AddNewTask = () => {
       accountabilityPartner: {name: "", username:""},
       from: new Date() as Date,
       end: null as Date | null,
-      startMonth: monthName
     }
   })
   
@@ -50,7 +51,8 @@ const AddNewTask = () => {
   const onSubmit = async (data: any) => {
     console.log("on submit data: ",data)
 
-    const bodyData = { ...data, userId };
+    const bodyData = { ...data, userId }
+
 
     const response = await fetch("/api/tasks/new-task",{
       method: "POST",
@@ -145,7 +147,7 @@ const AddNewTask = () => {
               setValue("frequency", selectedDays)
               }
             >
-            {["monday", "tuesday", "wednesday", "thrusday", "friday", "saturday", "sunday"].map((day) => (
+            {["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"].map((day) => (
               <ToggleGroupItem
                 key={day}
                 value={day}
@@ -209,17 +211,23 @@ const AddNewTask = () => {
           <>
             <div className="flex justify-between items-center">
               <Label>Starts at:</Label>
-              <DatePicker date={watch("from") as Date} onDateChange={(date) => { console.log("Selected 'from' date:", date) 
-              setValue("from", date!)}}
+              <DatePicker date={watch("from") as Date} onDateChange={(date) => { setValue("from", date!)}}
               />
             </div>
 
             <div className={`flex justify-between items-center `}>
               <Label>Ends at: <span className="text-xs text-gray-400">(optional)</span></Label>
               <DatePicker
-                date={watch("end")}
-                onDateChange={(date) => setValue("end", date)}
-                className = {errors.end ? "border-red-500" : ""}
+                date={watch("end") as Date}
+                onDateChange={(date) => {
+                  console.log("Callback triggered with date:", date);
+                  if (date) {
+                    const normalizedDate = date.toLocaleDateString();
+                    console.log("Normalized date:", normalizedDate);
+                  }
+                  setValue("end", date!);
+                }}
+                className={errors.end ? "border-red-500" : ""}
               />
             </div>
           </>
@@ -227,9 +235,22 @@ const AddNewTask = () => {
 
          {watch("frequencyType") === "monthly" && 
          <>
-          <Combobox onSelect={(selectedMonth: string) => {
-            setValue("startMonth", selectedMonth)
-          }}/>
+          <div className={`flex justify-between items-center `}>
+            <Label className="w-1/2">Starts at: </Label>
+            <div className="w-full">
+              
+              <MonthlyPicker startYear={2024} endYear={2030} selected={watch("from")} onSelect={(date) => { setValue("from", date)}} error={errors.end}/>
+            </div>
+              
+          </div>
+
+          <div className={`flex justify-between items-center `}>
+            <Label className="w-1/2">Ends at: <span className="text-xs text-gray-400">(optional)</span></Label>
+            <div className="w-full">
+              
+              <MonthlyPicker startYear={2024} endYear={2030} selected={watch("end") as Date} onSelect={(date) => { setValue("end", date)}}/>
+            </div>
+          </div>
          </>}
 
           {/* Task Type */}

@@ -4,17 +4,18 @@ import { z } from "zod";
 import Task from "@/models/Task";
 import { connectDB } from "@/lib/dbConnect";
 import TaskLog from "@/models/Tasklog";
-import { generateDailyLogs, generateWeeklyLogs } from "@/app/helpers/GenerateLogs";
+import { generateDailyLogs, generateMonthlyLogs, generateWeeklyLogs } from "@/app/helpers/GenerateLogs";
 
 export async function POST(req: NextRequest) {
     try {
       await connectDB()
       
-      const {userId, taskName, taskDescription, frequencyType, frequency, from, end, startMonth, taskType, accountabilityPartner} = await req.json()
-      console.log("body: ", userId, taskName, taskDescription, frequencyType, frequency, from, end, startMonth, taskType, accountabilityPartner)
+      const {userId, taskName, taskDescription, frequencyType, frequency, from, end,  taskType, accountabilityPartner} = await req.json()
+      console.log("body: ", userId, taskName, taskDescription, frequencyType, frequency, from, end, taskType, accountabilityPartner)
 
       const parsedFrom = new Date(from)
       const parsedEnd = end ? new Date(end) : null
+
       const validatedData = taskSchema.parse({
         taskName, 
         taskDescription, 
@@ -22,7 +23,6 @@ export async function POST(req: NextRequest) {
         frequency, 
         from: parsedFrom, 
         end: parsedEnd, 
-        startMonth, 
         taskType, 
         accountabilityPartner
       });
@@ -37,30 +37,34 @@ export async function POST(req: NextRequest) {
         type: validatedData.taskType,
         accountabilityPartner: validatedData.accountabilityPartner,
         startDate: validatedData.from,
-        endDate: validatedData.end,
-        startMonth: validatedData.startMonth
+        endDate: validatedData.end
       })
       const savedNewTask = await newTask.save()
 
-      let logs: { [key: string]: {date: string, status: string}[]} = {};
+      let logs: {date: string, status: string}[] = [] ;
     const currentDate = new Date();
     const startDate = new Date(validatedData.from);
     const endDate = validatedData.end ? new Date(validatedData.end) : null;
     
     if (validatedData.frequencyType === "daily") {
-        logs["daily"] = generateDailyLogs(startDate, endDate || currentDate )
+        logs = generateDailyLogs(startDate, endDate || currentDate )
+        console.log("Logs to database: ", logs)
     }else if(validatedData.frequencyType === "weekly") {
-         generateWeeklyLogs(startDate, endDate || currentDate )
+        logs = generateWeeklyLogs(startDate, endDate || currentDate, validatedData.frequency as string[] )
+        console.log("Logs to database (weekly): ", logs)
+    }else if(validatedData.frequencyType === "monthly") {
+        logs = generateMonthlyLogs( startDate, endDate || currentDate, validatedData.frequency as string[] )
+        console.log("Logs to database (monthly): ", logs)
     }
 
-    /*
-    const newTaskLog = await new TaskLog({
+    
+    /*const newTaskLog = await new TaskLog({
         taskId: savedNewTask._id,
         type: savedNewTask.taskFrequency,
-        logs /*object of key value pairs of array of specific task type 
+        logs
      })
 
-    await newTaskLog.save() */
+    await newTaskLog.save()  */
 
       return NextResponse.json({ success: true, data: validatedData });
     } catch (error) {
