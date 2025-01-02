@@ -7,17 +7,29 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useState, useEffect } from "react";
-import { Merge, FieldErrorsImpl } from "react-hook-form";
-import { FieldError } from "react-hook-form";
+import { useState } from "react";
 
 interface MonthlyPickerProps {
   startYear: number;
   endYear: number;
   selected: Date; // Ensure selected is always a Date object
   onSelect: (date: Date) => void;
-  error?: FieldError | Merge<FieldError, FieldErrorsImpl<{ date: Date }>>;
 }
+
+const months = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
 
 const MonthlyPicker: React.FC<MonthlyPickerProps> = ({
   startYear,
@@ -25,60 +37,31 @@ const MonthlyPicker: React.FC<MonthlyPickerProps> = ({
   selected,
   onSelect,
 }) => {
-  const [error, setError] = useState<string | null>(null);
-  const [currentDate, setCurrentDate] = useState<Date>(selected); // Track the current date
-  const [month]
+  const [selectedMonth, setSelectedMonth] = useState<string>(
+    months[selected?.getMonth()] || ""
+  );
+  const [selectedYear, setSelectedYear] = useState<string>(
+    selected?.getFullYear().toString() || ""
+  );
+  const [isTouched, setIsTouched] = useState<{ month: boolean; year: boolean }>({
+    month: false,
+    year: false,
+  });
 
-  // Update currentDate when selected changes
-  useEffect(() => {
-    setCurrentDate(selected);
-  }, [selected]);
-
-  // Handle month change
   const handleMonthChange = (month: string) => {
-    const year = currentDate?.getFullYear();
-    if (!year) {
-      setError("Please select a year before selecting a month.");
-      return;
-    }
-
-    const newDate = new Date(year, months.indexOf(month));
-    setCurrentDate(newDate);
-    setError(null); // Clear error
-    onSelect(newDate);
+    setSelectedMonth(month);
+    setIsTouched((prev) => ({ ...prev, month: true }));
+    const year = selectedYear ? parseInt(selectedYear) : startYear;
+    onSelect(new Date(year, months.indexOf(month)));
   };
 
-  // Handle year change
   const handleYearChange = (year: string) => {
-    const month = currentDate?.getMonth();
-    if (month === undefined || month === null) {
-      setError("Please select a month before selecting a year.");
-      return;
-    }
-
-    const newDate = new Date(parseInt(year), month);
-    setCurrentDate(newDate);
-    setError(null); // Clear error
-    onSelect(newDate);
+    setSelectedYear(year);
+    setIsTouched((prev) => ({ ...prev, year: true }));
+    const monthIndex = selectedMonth ? months.indexOf(selectedMonth) : 0;
+    onSelect(new Date(parseInt(year), monthIndex));
   };
 
-  // List of month names
-  const months = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-  ];
-
-  // List of years from startYear to endYear
   const years = Array.from({ length: endYear - startYear + 1 }, (_, i) => startYear + i);
 
   return (
@@ -87,14 +70,14 @@ const MonthlyPicker: React.FC<MonthlyPickerProps> = ({
       <Select onValueChange={handleMonthChange}>
         <SelectTrigger
           className={`${
-            !currentDate?.getFullYear() ? "border-red-500" : ""
+            isTouched.year && !selectedMonth ? "border-red-500" : ""
           } h-auto shadow-sm focus:outline-0 focus:ring-0 focus:ring-offset-0`}
         >
           <SelectValue
             placeholder={
               <div className="flex flex-col items-start">
                 <span className="font-normal dark:text-white">
-                  {months[currentDate?.getMonth()] || "-"}
+                  {selectedMonth || "-"}
                 </span>
               </div>
             }
@@ -115,16 +98,14 @@ const MonthlyPicker: React.FC<MonthlyPickerProps> = ({
       <Select onValueChange={handleYearChange}>
         <SelectTrigger
           className={`${
-            currentDate?.getMonth() === undefined || currentDate?.getMonth() === null
-              ? "border-red-500"
-              : ""
+            isTouched.month && !selectedYear ? "border-red-500" : ""
           } h-auto shadow-sm focus:outline-0 focus:ring-0 focus:ring-offset-0`}
         >
           <SelectValue
             placeholder={
               <div className="flex flex-col items-start">
                 <span className="font-normal dark:text-white">
-                  {currentDate?.getFullYear() || "-"}
+                  {selectedYear || "-"}
                 </span>
               </div>
             }
@@ -140,9 +121,6 @@ const MonthlyPicker: React.FC<MonthlyPickerProps> = ({
           </ScrollArea>
         </SelectContent>
       </Select>
-
-      {/* Error Message */}
-      {error && <div className="text-red-500">{error}</div>}
     </div>
   );
 };

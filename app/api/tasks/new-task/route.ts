@@ -4,7 +4,7 @@ import { z } from "zod";
 import Task from "@/models/Task";
 import { connectDB } from "@/lib/dbConnect";
 import TaskLog from "@/models/Tasklog";
-import { generateDailyLogs, generateMonthlyLogs, generateWeeklyLogs } from "@/app/helpers/GenerateLogs";
+import { generateCustomDateLogs, generateDailyLogs, generateMonthlyLogs, generateWeeklyLogs } from "@/app/helpers/GenerateLogs";
 
 export async function POST(req: NextRequest) {
     try {
@@ -55,6 +55,9 @@ export async function POST(req: NextRequest) {
     }else if(validatedData.frequencyType === "monthly") {
         logs = generateMonthlyLogs( startDate, endDate || currentDate, validatedData.frequency as string[] )
         console.log("Logs to database (monthly): ", logs)
+    }else if(validatedData.frequencyType === "custom") {
+        logs = generateCustomDateLogs(validatedData.frequency as Date[] )
+        console.log("Logs to database (custom): ", logs)
     }
 
     
@@ -62,9 +65,11 @@ export async function POST(req: NextRequest) {
         taskId: savedNewTask._id,
         type: savedNewTask.taskFrequency,
         logs
-     })
 
-    await newTaskLog.save()  */
+        await newTaskLog.save() 
+     }) */
+
+     
 
       return NextResponse.json({ success: true, data: validatedData });
     } catch (error) {

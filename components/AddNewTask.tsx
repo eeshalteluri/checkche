@@ -31,7 +31,8 @@ const AddNewTask = () => {
     if (session?.user?.id) {
       setUserId(session.user.id);
     }
-  }, [session]);
+  }, [session])
+
   const { control, handleSubmit, clearErrors, setValue, reset, watch, formState: { errors } } = useForm({
     resolver: zodResolver(taskSchema),
     defaultValues: {
@@ -46,7 +47,17 @@ const AddNewTask = () => {
     }
   })
   
+  useEffect(() => {
+    const frequencyType = watch("frequencyType");
   
+    if (frequencyType === "monthly") {
+      const firstOfMonth = new Date();
+      firstOfMonth.setDate(1); // Set the date to the first day of the month
+      setValue("from", startOfDay(firstOfMonth)); // Normalize to the start of the day
+    } else if (frequencyType === "daily" || frequencyType === "weekly") {
+      setValue("from", startOfDay(new Date())); // Set to today's date
+    }
+  }, [watch("frequencyType"), setValue])  
 
   const onSubmit = async (data: any) => {
     console.log("on submit data: ",data)
@@ -216,20 +227,29 @@ const AddNewTask = () => {
             </div>
 
             <div className={`flex justify-between items-center `}>
-              <Label>Ends at: <span className="text-xs text-gray-400">(optional)</span></Label>
-              <DatePicker
-                date={watch("end") as Date}
-                onDateChange={(date) => {
-                  console.log("Callback triggered with date:", date);
-                  if (date) {
-                    const normalizedDate = date.toLocaleDateString();
-                    console.log("Normalized date:", normalizedDate);
-                  }
-                  setValue("end", date!);
-                }}
-                className={errors.end ? "border-red-500" : ""}
-              />
-            </div>
+  <Label>
+    Ends at: <span className="text-xs text-gray-400">(optional)</span>
+  </Label>
+  <DatePicker
+    date={watch("end") as Date}
+    onDateChange={(date) => {
+      console.log("Callback triggered with date:", date);
+      if (date) {
+        // Ensure the date is set in UTC and avoid time zone shifts
+        const utcDate = new Date(
+          Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())
+        );
+
+        console.log("UTC date:", utcDate);
+
+        // Set the value using the UTC date
+        setValue("end", utcDate);
+      }
+    }}
+    className={errors.end ? "border-red-500" : ""}
+  />
+</div>
+
           </>
          }
 
@@ -239,7 +259,7 @@ const AddNewTask = () => {
             <Label className="w-1/2">Starts at: </Label>
             <div className="w-full">
               
-              <MonthlyPicker startYear={2024} endYear={2030} selected={watch("from")} onSelect={(date) => { setValue("from", date)}} error={errors.end}/>
+              <MonthlyPicker startYear={2024} endYear={2030} selected={watch("from")} onSelect={(date) => { setValue("from", date)}} />
             </div>
               
           </div>

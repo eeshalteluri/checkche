@@ -34,7 +34,7 @@ const taskSchema = z.object({
     )
     .refine((data) => {
       if (data.end && data.from) {
-        return data.end > data.from;
+        return data.end >= data.from;
       }
       return true; // If the end date is not provided, skip this check
     }, {
