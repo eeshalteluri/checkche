@@ -6,7 +6,8 @@ const UserSchema = new mongoose.Schema<UserType>({
   email: { type: String, required: true, unique: true }, // Email is required and must be unique
   image: { type: String, default: null }, // Default value for optional fields
   emailverified: { type: Boolean, default: null }, // Allows null values
-  username: { type: String, unique: true}, 
+  username: { type: String, unique: true},
+  tasks: {type: [mongoose.Schema.ObjectId], unique: true}, 
   friends: { type: [String], default: [] }, // Array of strings with default empty array
   groups: { type: [String], default: [] } // Array of strings with default empty array
 });

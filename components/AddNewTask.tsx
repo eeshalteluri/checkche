@@ -46,18 +46,34 @@ const AddNewTask = () => {
       end: null as Date | null,
     }
   })
-  
-  useEffect(() => {
-    const frequencyType = watch("frequencyType");
-  
-    if (frequencyType === "monthly") {
-      const firstOfMonth = new Date();
-      firstOfMonth.setDate(1); // Set the date to the first day of the month
-      setValue("from", startOfDay(firstOfMonth)); // Normalize to the start of the day
-    } else if (frequencyType === "daily" || frequencyType === "weekly") {
-      setValue("from", startOfDay(new Date())); // Set to today's date
+
+useEffect(() => {
+  const frequencyType = watch("frequencyType"); // Watch frequencyType
+  const currentFrom = watch("from"); // Watch current 'from' value
+  const currentTo = watch("end"); // Watch current 'to' value
+
+  if (frequencyType === "custom") {
+    // Set default values for custom frequency type
+    const defaultFrom = startOfDay(new Date()); // Default 'from' is the start of today
+    const defaultTo = null; // Default 'to' is the end of today
+    setValue("from", defaultFrom); // Set 'from' date
+    setValue("end", defaultTo); // Set 'to' date
+  } else if (frequencyType === "monthly") {
+    const firstOfMonth = new Date();
+    firstOfMonth.setDate(1); // Set to the first day of the month
+
+    if (!currentFrom || currentFrom.toDateString() === new Date().toDateString()) {
+      setValue("from", startOfDay(firstOfMonth)); // Set if not customized
     }
-  }, [watch("frequencyType"), setValue])  
+  } else if (frequencyType === "daily" || frequencyType === "weekly") {
+    if (!currentFrom || currentFrom.toDateString() === new Date().toDateString()) {
+      setValue("from", startOfDay(new Date())); // Set if not customized
+    }
+  }
+}, [watch("frequencyType")]); // Trigger only on frequencyType changes
+ // Only depend on `frequencyType` changes
+  
+  
 
   const onSubmit = async (data: any) => {
     console.log("on submit data: ",data)
@@ -91,6 +107,7 @@ const AddNewTask = () => {
       </DialogTrigger>
 
       <DialogContent className="h-[400px] overflow-y-scroll">
+        <DialogTitle/>
         <form onSubmit={handleSubmit(onSubmit)}>
         <div className="space-y-4">
           {/* Task Name */}
@@ -205,16 +222,32 @@ const AddNewTask = () => {
           </>
           )}
 
-          {watch("frequencyType") === "custom" && (
-            <>
-              <Calendar
-              mode="multiple"
-              selected={watch("frequency") as Date[]}
-              onSelect={(date)=> setValue("frequency", date!)}
-              />
-              {errors.frequency && !watch("frequency")?.length ? <p className="text-xs text-red-500">{errors?.frequency.message}</p>: <></>}
-          </>
-          )}
+{watch("frequencyType") === "custom" && (
+  <>
+    <Calendar
+      mode="multiple"
+      selected={watch("frequency") as Date[]}
+      onSelect={(selectedDates) => {
+        // Ensure selectedDates is an array of dates
+        const utcDates = (Array.isArray(selectedDates) ? selectedDates : [selectedDates])
+          .filter(Boolean) // Remove any null or undefined values
+          .map((date) =>
+            new Date(Date.UTC(date!.getFullYear(), date!.getMonth(), date!.getDate()))
+          );
+          console.log("UTC Dates: ", utcDates)
+
+        // Set the transformed UTC dates to frequency
+        setValue("frequency", utcDates);
+      }}
+    />
+    {errors.frequency && !watch("frequency")?.length ? (
+      <p className="text-xs text-red-500">{errors?.frequency.message}</p>
+    ) : (
+      <></>
+    )}
+  </>
+)}
+
 
 
           {/* Start and End Dates */}
@@ -222,7 +255,7 @@ const AddNewTask = () => {
           <>
             <div className="flex justify-between items-center">
               <Label>Starts at:</Label>
-              <DatePicker date={watch("from") as Date} onDateChange={(date) => { setValue("from", date!)}}
+              <DatePicker date={watch("from") as Date} onDateChange={(date) => { setValue("from", new Date(Date.UTC(date!.getFullYear(), date!.getMonth(), date!.getDate())))}}
               />
             </div>
 
@@ -259,7 +292,7 @@ const AddNewTask = () => {
             <Label className="w-1/2">Starts at: </Label>
             <div className="w-full">
               
-              <MonthlyPicker startYear={2024} endYear={2030} selected={watch("from")} onSelect={(date) => { setValue("from", date)}} />
+              <MonthlyPicker startYear={2024} endYear={2030} selected={watch("from") as Date} onSelect={(date) => { setValue("from", date)}} />
             </div>
               
           </div>

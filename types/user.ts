@@ -5,6 +5,7 @@ export interface UserType extends Document {
     image:String,
     emailverified: boolean | null,
     username?: String,
+    tasks?: String[],
     friends?: String[],
     groups?: String[]
   }

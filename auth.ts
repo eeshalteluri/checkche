@@ -11,12 +11,14 @@ export const authOptions = {
     async session({ session, user }: { session: Session; user: User }) {
       session.user.username = user.username // Add the username property
       session.user.friends = user.friends
+      session.user.tasks = user.tasks
       return session;
     },
     async jwt({ token, user }: { token: JWT; user?: User }) {
       if (user) {
         token.username = user.username; // Add username to the JWT
         token.friends = user.friends
+        token.tasks = user.tasks
       }
       return token;
     },

@@ -5,10 +5,13 @@ import Task from "@/models/Task";
 import { connectDB } from "@/lib/dbConnect";
 import TaskLog from "@/models/Tasklog";
 import { generateCustomDateLogs, generateDailyLogs, generateMonthlyLogs, generateWeeklyLogs } from "@/app/helpers/GenerateLogs";
+import client from "@/lib/db";
+import { ObjectId } from "mongodb";
 
 export async function POST(req: NextRequest) {
     try {
       await connectDB()
+      const db = client.db()
       
       const {userId, taskName, taskDescription, frequencyType, frequency, from, end,  taskType, accountabilityPartner} = await req.json()
       console.log("body: ", userId, taskName, taskDescription, frequencyType, frequency, from, end, taskType, accountabilityPartner)
@@ -39,7 +42,7 @@ export async function POST(req: NextRequest) {
         startDate: validatedData.from,
         endDate: validatedData.end
       })
-      const savedNewTask = await newTask.save()
+      const savedNewTask = await newTask.save() 
 
       let logs: {date: string, status: string}[] = [] ;
     const currentDate = new Date();
@@ -56,20 +59,28 @@ export async function POST(req: NextRequest) {
         logs = generateMonthlyLogs( startDate, endDate || currentDate, validatedData.frequency as string[] )
         console.log("Logs to database (monthly): ", logs)
     }else if(validatedData.frequencyType === "custom") {
-        logs = generateCustomDateLogs(validatedData.frequency as Date[] )
+        logs = generateCustomDateLogs(validatedData.frequency as string[] )
         console.log("Logs to database (custom): ", logs)
     }
 
     
-    /*const newTaskLog = await new TaskLog({
+    const addedToLoggedInUserDocument = await db.collection("users").findOneAndUpdate(
+        {_id: new ObjectId(userId)}, 
+        {
+            $addToSet: { tasks: savedNewTask._id }, // Add to friends array without duplication
+            $set: { updatedAt: new Date() }, // Optionally update the timestamp
+        },
+        { returnDocument: "after" } // Return the updated document
+    )
+
+
+    const newTaskLog = await new TaskLog({
         taskId: savedNewTask._id,
         type: savedNewTask.taskFrequency,
         logs
+     })
 
-        await newTaskLog.save() 
-     }) */
-
-     
+     await newTaskLog.save() 
 
       return NextResponse.json({ success: true, data: validatedData });
     } catch (error) {

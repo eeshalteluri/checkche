@@ -3,13 +3,14 @@ import getWeekDay from "./GetWeekDay"
 
 export function generateDailyLogs(startDate: Date, endDate: Date) {
     const logs = [];
-    const currentDate = new Date(startDate); // Clone startDate to avoid mutating it
-    currentDate.setUTCHours(0, 0, 0, 0); // Normalize to midnight UTC
+    const date = new Date(startDate); // Clone startDate to avoid mutating it
+    const currentDate = new Date(Date.UTC(date!.getFullYear(), date!.getMonth(), date!.getDate())) // Normalize to midnight UTC
     const today = new Date();
     today.setUTCHours(0, 0, 0, 0); // Normalize today's date to midnight UTC
 
     console.log("Start Date (UTC):", startDate.toISOString());
     console.log("End Date (UTC):", endDate.toISOString());
+    console.log("Current Date (UTC):", currentDate.toISOString());
     console.log("Today's Date (UTC):", today.toISOString());
 
     // Loop until currentDate is less than or equal to endDate
@@ -32,11 +33,9 @@ export function generateDailyLogs(startDate: Date, endDate: Date) {
     return logs;
 }
 
-
-
 export function generateWeeklyLogs(startDate: Date, endDate: Date, frequency: string[]) {
     const logs: { date: string; status: string }[] = [];
-    let currentDate = new Date(startDate); // Clone startDate to avoid mutating it
+    let currentDate = startDate // Clone startDate to avoid mutating it
     currentDate.setHours(0, 0, 0, 0); // Normalize to midnight
     const today = new Date();
     today.setHours(0, 0, 0, 0); // Normalize today's date to midnight
@@ -99,6 +98,11 @@ export function generateMonthlyLogs(
     // Extract month and year from the start and end dates
     let currentMonth = startMonth.getMonth();
     let currentYear = startMonth.getFullYear();
+
+    console.log("Frequency:", frequency);
+    console.log("Start Date:", startMonth.toISOString());
+    console.log("End Date:", endMonth.toISOString());
+    console.log("Today's Date:", today.toISOString());
   
     const endMonthIndex = endMonth.getMonth();
     const endYear = endMonth.getFullYear();
@@ -117,7 +121,7 @@ export function generateMonthlyLogs(
         if (frequency.includes(dayOfMonth)) {
           const status = currentDate < today ? "missed" : "pending"; // Compare as UTC
           logs.push({
-            date: currentDate.toISOString().split("T")[0], // Format date as YYYY-MM-DD
+            date: currentDate.toISOString(), // Format date as YYYY-MM-DD
             status,
           });
         }
@@ -135,29 +139,33 @@ export function generateMonthlyLogs(
   }
   
 
-export function generateCustomDateLogs(selectedDates: Date[]): { date: string; status: string }[] {
+  export function generateCustomDateLogs(selectedDates: string[]) {
     const logs: { date: string; status: string }[] = [];
     const today = new Date();
     today.setHours(0, 0, 0, 0); // Normalize today's date to midnight for accurate comparisons
-
     console.log("Today's Date:", today.toISOString());
 
-    // Process each selected date
-    selectedDates.forEach((date) => {
+    selectedDates.forEach((input) => {
+        console.log("Input Date: ", input)
+        const date = new Date(input); // Convert to Date object
+        if (isNaN(date.getTime())) {
+            console.error("Invalid date encountered:", input);
+            return; // Skip invalid dates
+        }
+
         console.log("Processing selected date:", date);
 
-        const normalizedDate = new Date(date);
-        normalizedDate.setHours(0, 0, 0, 0); // Normalize the date to midnight
 
-        const status = normalizedDate < today ? "missed" : "pending"; // Determine status
-        logs.push({ date: normalizedDate.toISOString().split("T")[0], status });
+        const status = date < today ? "missed" : "pending"; // Determine status
+        logs.push({ date: date.toISOString(), status });
 
-        console.log(`Logged date: ${normalizedDate.toISOString()} with status: ${status}`);
+        console.log(`Logged date: ${date} with status: ${status}`);
     });
 
     console.log("Generated Custom Logs:", logs);
     return logs;
 }
+
 
   
 
