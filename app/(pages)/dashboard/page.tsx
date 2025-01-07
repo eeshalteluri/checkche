@@ -9,41 +9,67 @@ import TaskCard from "@/components/TaskCard";
 import { useEffect, useState } from "react";
 
 interface Task {
-  _id: string;
+  taskLog: {
+    _id: string;
   taskId: string;
   logs: { date: string; status: string }[]; // Array of objects with date and status properties
+  },
+  taskDetails: {
+    _id: string;
+    userId: string;
+    name: string;
+    description: string;
+    taskFrequency: string;
+    frequency: string[];
+    type: string;
+    accountabilityPartner: {
+      name: string;
+      username: string;
+    };
+    startDate: string;
+    endDate: string | null;
+    createdAt: string;
+    updatedAt: string;
+  }
 }
-
 
 export default function Home() {
   const { data: session } = useSession();
-  const [taskLogs, setTaskLogs] = useState<Task[]>([]);
+  const [tasksData, setTasksData] = useState<Task[]>([]);
 
   useEffect(() => {
-    const fetchTasks = async () => {
-      if (session?.user?.tasks?.length > 0) {
+    const fetchTasksLogs = async () => {
+      const taskIds = session?.user?.tasks || []; // Ensure fallback for tasks
+      if (taskIds.length > 0) {
+        console.log("User Tasks: ", taskIds);
         try {
-          const response = await fetch("/api/taskslogs", {
+          const response = await fetch("/api/tasks/tasklogs", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
             },
-            body: JSON.stringify({ taskIds: session?.user.tasks }), // Send the array of task IDs
+            body: JSON.stringify({ taskIds }), // Send the array of task IDs
           });
 
+          if (!response.ok) {
+            throw new Error(`Failed to fetch tasks: ${response.statusText}`);
+          }
+
           const data = await response.json();
-          setTaskLogs(data.tasks || []); // Assuming the API returns a `tasks` array
+          console.log("Fetched Task logs: ", data)
+
+          setTasksData(data.tasksLogsData)
         } catch (error) {
           console.error("Error fetching tasks:", error);
+          setTasksData([]); // Reset state to avoid UI inconsistencies
         }
       }
     };
 
-    fetchTasks();
-  }, [session]);
+    fetchTasksLogs();
+  }, [session?.user?.tasks]);
 
   if (!session) return <p>Loading...</p>;
-  console.log("session: ", session);
 
   return (
     <div>
@@ -60,18 +86,12 @@ export default function Home() {
         <RemainingTasks />
       </div>
 
-      <TasksCard />
-
       {/* Render TaskCard for each task */}
-      <div className="task-cards-container">
-        {taskLogs.length > 0 ? (
-          taskLogs.map((task) => (
-            <TaskCard key={task._id} task={task} />
-          ))
-        ) : (
-          <p>No tasks found.</p>
-        )}
-      </div>
+      {Array.isArray(tasksData) && tasksData.length === 0 ? (
+        <p>no tasks found.</p>
+      ) : (
+        tasksData?.map((taskData) => <TaskCard key={taskData.taskDetails._id} task={taskData} />)
+      )}
     </div>
   );
 }
