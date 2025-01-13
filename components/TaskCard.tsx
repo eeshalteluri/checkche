@@ -15,6 +15,7 @@ import {
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import { Separator } from "./ui/separator";
+import { date } from "zod";
 
 interface TaskLog {
   _id: string;
@@ -110,6 +111,15 @@ const TaskCard: React.FC<TaskCardProps> = (taskData) => {
   const taskDetails = taskData.task.taskDetails;
   const taskLogs = taskData.task.taskLog;
 
+  const date = new Date();
+  date.setUTCHours(0, 0, 0, 0);
+  const isoDate = new Date(date).toISOString();
+  console.log("ISO Date: ", isoDate)
+
+  console.log("Task logs: ", taskLogs.logs)
+  const doesTodayExist = taskLogs.logs.find((log) => log.date === isoDate )
+  console.log("Does Today exist: ", doesTodayExist)
+
   // Step 1: Create the ref for the scrollable container
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -141,11 +151,33 @@ const TaskCard: React.FC<TaskCardProps> = (taskData) => {
 
   const streak = calculateStreaks(taskLogs)
 
+  const handleDelete = async (taskId: string) => {
+    try{
+      const response = await fetch("/api/tasks", {
+        method: 'DELETE',
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({taskId})
+      })
+
+      if(response.ok) {
+        const result = await response.json()
+        console.log(result.message)
+      }else{
+        const error = await response.json()
+        console.log(`Error: ${error.message}`)
+      }
+    }catch(error){
+      console.error("Error deleting Task: ", error)
+    }
+  }
+
   return (
     <TaskCardHolder className="mx-2 mt-2 ">
       <CardHeader className="flex justify-between items-center gap-2">
-        <div className="flex justify-center items-center gap-2">
-          <CardTitle className="max-w-[100px] py-1 truncate">{taskDetails.name}</CardTitle>
+        <div className="flex justify-start items-center gap-2">
+          <CardTitle className="max-w-[80px] py-1 truncate" title={taskDetails.name}>{taskDetails.name}</CardTitle>
           {/* Use HoverCard for larger screens and Popover for smaller screens */}
           <div className="hidden sm:block">
             <HoverCard>
@@ -185,31 +217,99 @@ const TaskCard: React.FC<TaskCardProps> = (taskData) => {
               <PopoverTrigger asChild>
                 <Info className="w-4 h-4" />
               </PopoverTrigger>
-              <PopoverContent className="max-w-[350px] md:w-fit m-2 p-2">
-              <div className=" flex justify-end items-start">
+              <PopoverContent className=" max-w-[280px] xs:max-w-[350px] md:w-fit m-2 p-2">
+
+             { 
+             taskDetails.description && 
+             <>
+             <div className=" flex justify-start items-start">
                 <p className="w-[300px] md:w-full ml-2 text-sm">{taskDetails.description}</p>
               </div>
 
               <Separator className="my-2"/>
+              </>
+              }
 
-              <div className="flex items-center">
-                <span className="font-medium text-sm text-gray-500">Task Frequency:</span>
-                <p className="ml-2 text-sm">{taskDetails.taskFrequency.charAt(0).toUpperCase() + taskDetails.taskFrequency.slice(1)}</p>
-              </div>
+              {taskDetails.taskFrequency && 
+                <>
+                  <div className="flex items-center">
+                    <span className="font-medium text-sm text-gray-500">Task Frequency:</span>
+                    <p className="ml-2 text-sm">{taskDetails.taskFrequency.charAt(0).toUpperCase() + taskDetails.taskFrequency.slice(1)}</p>
+                  </div>
+                </>
+              }
 
-              <div className="flex items-center">
-                <span className="font-medium text-sm text-gray-500">Frequency:</span>
-                <p className="ml-2 text-sm">
-                  {taskDetails.frequency.map((freq, index) => (
-                    <span key={index}>{freq.charAt(0).toUpperCase() + freq.slice(1)}{index < taskDetails.frequency.length - 1 ? ", " : ""}</span>
-                  ))}
-                </p>
-              </div>
+              {taskDetails.taskFrequency != "custom" && taskDetails.frequency.length > 0 && (
+                <>
+                  <div className="flex items-start">
+                    <span className="font-medium text-sm text-gray-500">Frequency:</span>
+                    <p className="ml-2 text-sm">
+                      {taskDetails.frequency
+                        .slice() // Make a copy of the array to avoid mutating the original
+                        .sort((a, b) => {
+                          // Check if both are numbers
+                          const numA = parseInt(a, 10);
+                          const numB = parseInt(b, 10);
 
-              <div className="flex items-center">
-                <span className="font-medium text-sm text-gray-500">Type:</span>
-                <p className="ml-2 text-sm">{taskDetails.type === "NT" ? "Normal Task" : "Accountability Task"}</p>
-              </div>
+                          // If both are valid numbers, sort numerically
+                          if (!isNaN(numA) && !isNaN(numB)) {
+                            return numA - numB;
+                          }
+
+                          // Otherwise, keep the original order
+                          return 0;
+                        })
+                        .map((freq, index) => (
+                          <span key={index}>
+                            {freq.charAt(0).toUpperCase() + freq.slice(1)}
+                            {index < taskDetails.frequency.length - 1 ? ", " : ""}
+                          </span>
+                        ))}
+                    </p>
+                  </div>
+                </>
+              )}
+              {taskDetails.taskFrequency === "custom" && taskDetails.frequency.length > 0 && (
+  <>
+    <div className="flex items-start">
+      <span className="font-medium text-sm text-gray-500">Frequency:</span>
+      <p className="ml-2 text-sm">
+        {taskDetails.frequency
+          .slice() // Make a copy of the array to avoid mutating the original
+          .sort((a, b) => {
+            // Convert to Date objects for comparison
+            const dateA = new Date(a).getTime();
+            const dateB = new Date(b).getTime();
+
+            return dateA - dateB; // Sort numerically by date
+          })
+          .map((freq, index) => {
+            const date = new Date(freq); // Convert string to Date object
+
+            // Format the date as "DD MMM YYYY"
+            const formattedDate = date.toLocaleDateString("en-US", {
+              day: "2-digit",
+              month: "short", // Abbreviated month
+            });
+
+            return (
+              <span key={index}>
+                {formattedDate}
+                {index < taskDetails.frequency.length - 1 ? ", " : ""}
+              </span>
+            );
+          })}
+      </p>
+    </div>
+  </>
+)}
+              {taskDetails.type && 
+                <>
+                <div className="flex items-center">
+                  <span className="font-medium text-sm text-gray-500">Type:</span>
+                  <p className="ml-2 text-sm">{taskDetails.type === "NT" ? "Normal Task" : "Accountability Task"}</p>
+                </div>
+                </>}
               </PopoverContent>
             </Popover>
           </div>
@@ -237,7 +337,7 @@ const TaskCard: React.FC<TaskCardProps> = (taskData) => {
         </div>
 
         <div className="flex justify-center items-center">
-          <Button>Mark</Button>
+          <Button onClick={() => console.log("Button Clicked")} disabled={!!!doesTodayExist}>{doesTodayExist?.status === "pending" ? "Mark": doesTodayExist?.status === "approval" ? "Send Approval": doesTodayExist?.status === "completed" ? "Unmark": "Mark"}</Button>
           <Popover>
             <PopoverTrigger asChild>
               <EllipsisVertical />
@@ -246,7 +346,7 @@ const TaskCard: React.FC<TaskCardProps> = (taskData) => {
             <PopoverContent className="w-fit m-2 p-2">
               <div className="flex gap-2">
                 <Button size={"sm"}>Edit task</Button>
-                <Button size={"sm"}>Delete</Button>
+                <Button size={"sm"} onClick={() => handleDelete(taskDetails._id)}>Delete</Button>
               </div>
             </PopoverContent>
           </Popover>
@@ -259,8 +359,6 @@ const TaskCard: React.FC<TaskCardProps> = (taskData) => {
             const currentDay = index + 1;
             const currentDate = getDateFromDayOfYear(currentDay)
             let colorClass = "bg-gray-200"; // Default color for days before start
-
-            console.log("Start Day:", start, "Current Day:", currentDay)
             // Find log for this day
             const logForDay = taskLogs.logs.find(
               (log) => getDayOfYear(new Date(log.date)) === currentDay

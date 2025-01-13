@@ -9,6 +9,7 @@ import client from "@/lib/db";
 import { ObjectId } from "mongodb";
 
 export async function POST(req: NextRequest) {
+  console.log("New Task POST API function is being called.")
     try {
       await connectDB()
       const db = client.db()
@@ -106,3 +107,4 @@ export async function POST(req: NextRequest) {
       );
     }
   }
+

@@ -1,9 +1,12 @@
+import { connectDB } from "@/lib/dbConnect";
 import Task from "@/models/Task";
 import TaskLog from "@/models/Tasklog";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
   try {
+    await connectDB()
+    
     const { taskIds } = await req.json();
 
     // Validate input

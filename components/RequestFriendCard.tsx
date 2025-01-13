@@ -37,7 +37,7 @@ import { useSession } from "next-auth/react";
       setIsClicked(true);
       await deleteRequest(
         type === "received" ? username : session?.user?.username!,
-        type === "received" ? session?.user?.username! : username
+        type === "sent" ? session?.user?.username! : username
       );
       setIsClicked(false);
     }
